@@ -80,4 +80,25 @@ class CreditCardsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Credit card account updated", flash[:notice]
     assert_enqueued_with(job: SyncJob)
   end
+
+  test "updates account currency" do
+    original_currency = @account.currency
+    assert_equal "USD", original_currency
+
+    patch credit_card_path(@account), params: {
+      account: {
+        name: @account.name,
+        currency: "EUR",
+        accountable_type: "CreditCard",
+        accountable_attributes: {
+          id: @account.accountable_id
+        }
+      }
+    }
+
+    @account.reload
+    assert_equal "EUR", @account.currency
+    assert_redirected_to @account
+    assert_equal "Credit card account updated", flash[:notice]
+  end
 end
