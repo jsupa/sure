@@ -101,4 +101,46 @@ class CreditCardsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to @account
     assert_equal "Credit card account updated", flash[:notice]
   end
+
+  test "rejects invalid currency" do
+    patch credit_card_path(@account), params: {
+      account: {
+        name: @account.name,
+        currency: "INVALID",
+        accountable_type: "CreditCard",
+        accountable_attributes: {
+          id: @account.accountable_id
+        }
+      }
+    }
+
+    # Should remain unchanged due to validation error
+    @account.reload
+    assert_equal "USD", @account.currency
+    assert_response :unprocessable_entity
+    assert_includes response.body, "error"
+  end
+
+  test "allows currency update with balance change" do
+    original_currency = @account.currency
+    original_balance = @account.balance
+    
+    patch credit_card_path(@account), params: {
+      account: {
+        name: @account.name,
+        balance: 1500,
+        currency: "GBP",
+        accountable_type: "CreditCard",
+        accountable_attributes: {
+          id: @account.accountable_id
+        }
+      }
+    }
+
+    @account.reload
+    assert_equal "GBP", @account.currency
+    assert_equal 1500, @account.balance
+    assert_redirected_to @account
+    assert_equal "Credit card account updated", flash[:notice]
+  end
 end
