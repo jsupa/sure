@@ -139,7 +139,7 @@ class FinancialSubscriptionTest < ActiveSupport::TestCase
   end
 
   test "scopes work correctly" do
-    overdue_sub = FinancialSubscription.create!(
+    overdue_subscription = FinancialSubscription.create!(
       family: @family,
       account: @account,
       name: "Overdue Subscription",
@@ -149,7 +149,7 @@ class FinancialSubscriptionTest < ActiveSupport::TestCase
       next_payment_date: Date.current - 1.day
     )
 
-    upcoming_sub = FinancialSubscription.create!(
+    upcoming_subscription = FinancialSubscription.create!(
       family: @family,
       account: @account,
       name: "Upcoming Subscription",
@@ -160,12 +160,12 @@ class FinancialSubscriptionTest < ActiveSupport::TestCase
     )
 
     assert_includes FinancialSubscription.overdue, overdue_sub
-    assert_not_includes FinancialSubscription.overdue, upcoming_sub
+    assert_not_includes FinancialSubscription.overdue, upcoming_subscription
 
-    assert_includes FinancialSubscription.upcoming(7), upcoming_sub
+    assert_includes FinancialSubscription.upcoming(7), upcoming_subscription
     assert_not_includes FinancialSubscription.upcoming(7), overdue_sub
 
     assert_includes FinancialSubscription.for_family(@family), overdue_sub
-    assert_includes FinancialSubscription.for_family(@family), upcoming_sub
+    assert_includes FinancialSubscription.for_family(@family), upcoming_subscription
   end
 end

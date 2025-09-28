@@ -15,7 +15,7 @@ netflix:
 spotify:
   id: <%= SecureRandom.uuid %>
   family: dylan_family
-  account: dylan_checking  
+  account: dylan_checking
   name: "Spotify"
   amount: 9.99
   currency: "USD"

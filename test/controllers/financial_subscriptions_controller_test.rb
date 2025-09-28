@@ -189,8 +189,8 @@ class FinancialSubscriptionsControllerTest < ActionDispatch::IntegrationTest
       next_payment_date: Date.current - 1.day
     )
 
-    # Stub mark_as_paid! to raise an error
-    FinancialSubscription.any_instance.stubs(:mark_as_paid!).raises(StandardError, "Test error")
+    # Stub mark_as_paid! to raise an error only on this instance
+    invalid_subscription.stubs(:mark_as_paid!).raises(StandardError, "Test error")
 
     patch mark_as_paid_financial_subscription_url(invalid_subscription)
 
