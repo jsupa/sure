@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_08_08_143007) do
+ActiveRecord::Schema[7.2].define(version: 2025_09_28_142540) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -18,6 +18,20 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_08_143007) do
   # Custom types defined in this database.
   # Note that some types may not work with other database engines. Be careful if changing database.
   create_enum "account_status", ["ok", "syncing", "error"]
+
+  create_table "account_currency_changes", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "account_id", null: false
+    t.string "from_currency", null: false
+    t.string "to_currency", null: false
+    t.decimal "exchange_rate", precision: 19, scale: 8
+    t.date "conversion_date", null: false
+    t.text "notes"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "conversion_date"], name: "idx_on_account_id_conversion_date_f4034aaeaf"
+    t.index ["account_id"], name: "index_account_currency_changes_on_account_id"
+    t.index ["from_currency", "to_currency"], name: "idx_on_from_currency_to_currency_eef74130df"
+  end
 
   create_table "accounts", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "subtype"
@@ -29,7 +43,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_08_143007) do
     t.uuid "accountable_id"
     t.decimal "balance", precision: 19, scale: 4
     t.string "currency"
-    t.virtual "classification", type: :string, as: "\nCASE\n    WHEN ((accountable_type)::text = ANY (ARRAY[('Loan'::character varying)::text, ('CreditCard'::character varying)::text, ('OtherLiability'::character varying)::text])) THEN 'liability'::text\n    ELSE 'asset'::text\nEND", stored: true
+    t.virtual "classification", type: :string, as: "\nCASE\n    WHEN ((accountable_type)::text = ANY ((ARRAY['Loan'::character varying, 'CreditCard'::character varying, 'OtherLiability'::character varying])::text[])) THEN 'liability'::text\n    ELSE 'asset'::text\nEND", stored: true
     t.uuid "import_id"
     t.uuid "plaid_account_id"
     t.decimal "cash_balance", precision: 19, scale: 4, default: "0.0"
@@ -876,6 +890,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_08_143007) do
     t.string "subtype"
   end
 
+  add_foreign_key "account_currency_changes", "accounts"
   add_foreign_key "accounts", "families"
   add_foreign_key "accounts", "imports"
   add_foreign_key "accounts", "plaid_accounts"

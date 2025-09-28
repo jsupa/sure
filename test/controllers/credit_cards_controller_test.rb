@@ -110,13 +110,13 @@ class CreditCardsControllerTest < ActionDispatch::IntegrationTest
     # Balance should be converted using exchange rate
     expected_balance = (original_balance * 0.85).round(4)
     assert_equal expected_balance, @account.balance.round(4)
-    
+
     # Check currency change record was created
     currency_change = @account.account_currency_changes.last
     assert_not_nil currency_change
     assert_equal "USD", currency_change.from_currency
     assert_equal "EUR", currency_change.to_currency
-    
+
     assert_redirected_to @account
     assert_includes flash[:notice], "converted to EUR"
   end
@@ -167,10 +167,7 @@ class CreditCardsControllerTest < ActionDispatch::IntegrationTest
       rate: 0.79,
       date: Date.current
     )
-    
-    original_currency = @account.currency
-    original_balance = @account.balance
-    
+
     patch credit_card_path(@account), params: {
       account: {
         name: @account.name,

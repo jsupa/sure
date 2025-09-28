@@ -1,8 +1,8 @@
-<%# locals: (account:) %>
+<%# locals: (account:) -%>
 
 <% if account.currency_recently_changed? && (latest_change = account.latest_currency_change) %>
   <div class="mb-4">
-    <%= render DS::Alert.new(variant: :info) do %>
+    <% message_content = capture do %>
       <div class="flex items-center justify-between">
         <div>
           <strong>Currency recently changed</strong>
@@ -15,5 +15,6 @@
         </div>
       </div>
     <% end %>
+    <%= render DS::Alert.new(message: message_content.html_safe, variant: :info) %>
   </div>
 <% end %>
