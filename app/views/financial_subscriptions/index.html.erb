@@ -1,0 +1,152 @@
+<header class="flex justify-between items-center text-primary font-medium">
+  <h1 class="text-xl">Subscriptions</h1>
+  <div class="flex items-center gap-5">
+    <div class="flex items-center gap-2">
+      <%= render DS::Link.new(
+        text: "New subscription",
+        href: new_financial_subscription_path,
+        variant: "primary",
+        icon: "plus",
+        frame: :modal
+      ) %>
+    </div>
+  </div>
+</header>
+
+<div class="space-y-6 pb-20">
+  <!-- Expense Analytics -->
+  <% if @financial_subscriptions.any? %>
+    <section>
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-lg font-semibold text-primary flex items-center gap-2">
+          <%= icon("bar-chart-3", class: "w-5 h-5") %>
+          Expense Overview
+        </h2>
+      </div>
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-container border border-secondary rounded-lg p-4">
+          <div class="text-center">
+            <p class="text-2xl font-bold text-primary">
+              <%= @monthly_total.format %>
+            </p>
+            <p class="text-sm text-secondary">Monthly Total</p>
+            <% if @has_mixed_currencies %>
+              <p class="text-xs text-secondary opacity-75 mt-1">
+                <%= icon("arrow-up-down", class: "w-3 h-3 inline mr-1") %>
+                Converted to <%= @family_currency %>
+              </p>
+            <% end %>
+          </div>
+        </div>
+        
+        <div class="bg-container border border-secondary rounded-lg p-4">
+          <div class="text-center">
+            <p class="text-2xl font-bold text-primary">
+              <%= @yearly_total.format %>
+            </p>
+            <p class="text-sm text-secondary">Yearly Total</p>
+            <% if @has_mixed_currencies %>
+              <p class="text-xs text-secondary opacity-75 mt-1">
+                <%= icon("arrow-up-down", class: "w-3 h-3 inline mr-1") %>
+                Converted to <%= @family_currency %>
+              </p>
+            <% end %>
+          </div>
+        </div>
+        
+        <% if @monthly_overdue.amount > 0 %>
+          <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+            <div class="text-center">
+              <p class="text-2xl font-bold text-red-600">
+                <%= @monthly_overdue.format %>
+              </p>
+              <p class="text-sm text-red-700">Overdue Monthly</p>
+              <% if @has_mixed_currencies %>
+                <p class="text-xs text-red-600 opacity-75 mt-1">
+                  <%= icon("arrow-up-down", class: "w-3 h-3 inline mr-1") %>
+                  Converted to <%= @family_currency %>
+                </p>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+        
+        <div class="bg-container border border-secondary rounded-lg p-4">
+          <div class="text-center">
+            <p class="text-lg font-semibold text-primary"><%= @financial_subscriptions.count %></p>
+            <p class="text-sm text-secondary">Active Subscriptions</p>
+            <% if @has_mixed_currencies %>
+              <p class="text-xs text-tertiary mt-1">
+                <%= @financial_subscriptions.pluck(:currency).uniq.join(', ') %>
+              </p>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    </section>
+  <% end %>
+
+
+
+<!-- Overdue Subscriptions -->
+<% if @overdue_subscriptions.any? %>
+  <section>
+    <h2 class="text-lg font-semibold text-red-600 mb-3 flex items-center gap-2">
+      <%= icon("alert-circle", class: "w-5 h-5") %>
+      Overdue Subscriptions (<%= @overdue_subscriptions.count %>)
+    </h2>
+    <div class="bg-container border border-secondary rounded-lg divide-y divide-secondary">
+      <% @overdue_subscriptions.each do |subscription| %>
+        <%= render "subscription", subscription: subscription, show_mark_paid: true %>
+      <% end %>
+    </div>
+  </section>
+<% end %>
+
+<!-- Upcoming Subscriptions -->
+<% if @upcoming_subscriptions.any? %>
+  <section>
+    <h2 class="text-lg font-semibold text-primary mb-3 flex items-center gap-2">
+      <%= icon("clock", class: "w-5 h-5") %>
+      Upcoming Subscriptions
+    </h2>
+    <div class="bg-container border border-secondary rounded-lg divide-y divide-secondary">
+      <% @upcoming_subscriptions.each do |subscription| %>
+        <%= render "subscription", subscription: subscription, show_mark_paid: false %>
+      <% end %>
+    </div>
+  </section>
+<% end %>
+
+<!-- Recent Payments -->
+<% if @recent_payments.any? %>
+  <section>
+    <h2 class="text-lg font-semibold text-primary mb-3 flex items-center gap-2">
+      <%= icon("check-circle", class: "w-5 h-5") %>
+      Recent Payments
+    </h2>
+    <div class="bg-container border border-secondary rounded-lg divide-y divide-secondary">
+      <% @recent_payments.each do |payment| %>
+        <%= render "subscription_payment", payment: payment %>
+      <% end %>
+    </div>
+  </section>
+<% end %>
+
+<% if @overdue_subscriptions.empty? && @upcoming_subscriptions.empty? && @recent_payments.empty? %>
+  <div class="text-center py-12">
+    <div class="text-secondary mb-4">
+      <%= icon("credit-card", size: "lg") %>
+    </div>
+    <h3 class="text-lg font-medium text-primary mb-2">No subscriptions yet</h3>
+    <p class="text-secondary mb-4">Track your recurring payments and subscriptions</p>
+    <%= render DS::Link.new(
+      text: "Add your first subscription",
+      href: new_financial_subscription_path,
+      variant: "primary",
+      frame: :modal
+    ) %>
+  </div>
+<% end %>
+</div>
+

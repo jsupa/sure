@@ -1,0 +1,32 @@
+<%# locals: (payment:) %>
+
+<div class="p-4 flex items-center justify-between gap-3">
+  <div class="flex items-center gap-3 flex-1">
+    <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+      <%= icon("check-circle", class: "w-5 h-5 text-green-600") %>
+    </div>
+
+    <div class="flex-1 min-w-0">
+      <div class="flex items-center gap-2">
+        <h4 class="font-medium text-primary"><%= payment.subscription_name %></h4>
+      </div>
+      
+      <div class="flex items-center gap-4 text-sm text-secondary">
+        <span><%= payment.amount_money&.format %></span>
+        <span>from <%= payment.subscription_account.name %></span>
+        <span>paid on <%= payment.payment_date.strftime('%b %d, %Y') %></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="flex items-center gap-2">
+    <%= render DS::Link.new(
+      text: "View",
+      href: transaction_path(payment.transaction),
+      variant: "ghost", 
+      size: "sm",
+      icon: "external-link",
+      frame: "_top"
+    ) %>
+  </div>
+</div>
