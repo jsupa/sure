@@ -1,6 +1,12 @@
 class FinancialSubscription < ApplicationRecord
   include Monetizable
 
+  # Average number of days per year, including leap years (365 days + 1 extra day every 4 years)
+  AVERAGE_DAYS_PER_YEAR = 365.25
+
+  # Average number of days per month (average days per year divided by 12 months)
+  AVERAGE_DAYS_PER_MONTH = AVERAGE_DAYS_PER_YEAR / 12.0
+
   belongs_to :account
   belongs_to :family
   has_many :financial_subscription_payments, dependent: :destroy
@@ -69,6 +75,12 @@ class FinancialSubscription < ApplicationRecord
     end
   end
 
+  # Average number of weeks per year (365.25 days/year divided by 7 days/week)
+  AVERAGE_WEEKS_PER_YEAR = 365.25 / 7.0
+
+  # Average number of weeks per month (AVERAGE_WEEKS_PER_YEAR ÷ 12 months/year)
+  AVERAGE_WEEKS_PER_MONTH = AVERAGE_WEEKS_PER_YEAR / 12.0
+
   def monthly_equivalent_amount
     return 0 if amount.nil?
 
@@ -76,7 +88,7 @@ class FinancialSubscription < ApplicationRecord
     when "daily"
       amount.to_f * 30.44 # Average days per month
     when "weekly"
-      amount.to_f * 4.33 # Average weeks per month
+      amount.to_f * AVERAGE_WEEKS_PER_MONTH # Average weeks per month
     when "monthly"
       amount.to_f
     when "quarterly"
@@ -95,7 +107,7 @@ class FinancialSubscription < ApplicationRecord
     when "daily"
       amount.to_f * 365.25 # Including leap years
     when "weekly"
-      amount.to_f * 52.18 # Average weeks per year
+      amount.to_f * AVERAGE_WEEKS_PER_YEAR # Average weeks per year
     when "monthly"
       amount.to_f * 12
     when "quarterly"
@@ -218,19 +230,6 @@ class FinancialSubscription < ApplicationRecord
   private
 
     def get_fallback_exchange_rate(from_currency, to_currency)
-      # Some common fallback rates (approximate) - should be replaced with real data
-      fallback_rates = {
-        # EGP to EUR (Egyptian Pound to Euro) - approximate rate
-        "EGP" => { "EUR" => 0.02, "USD" => 0.021 },
-        # USD to EUR
-        "USD" => { "EUR" => 0.85, "EGP" => 48.0 },
-        # EUR to other currencies
-        "EUR" => { "USD" => 1.18, "EGP" => 50.0 },
-        # GBP rates
-        "GBP" => { "EUR" => 1.15, "USD" => 1.25, "EGP" => 60.0 }
-        # Add more as needed
-      }
-
-      fallback_rates.dig(from_currency, to_currency)
+      Rails.application.config.fallback_exchange_rates.dig(from_currency, to_currency)
     end
 end
