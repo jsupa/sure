@@ -1,0 +1,19 @@
+<%# locals: (account:) %>
+
+<% if account.currency_recently_changed? && (latest_change = account.latest_currency_change) %>
+  <div class="mb-4">
+    <%= render DS::Alert.new(variant: :info) do %>
+      <div class="flex items-center justify-between">
+        <div>
+          <strong>Currency recently changed</strong>
+          <p class="text-sm mt-1">
+            <%= latest_change.conversion_summary %>
+          </p>
+        </div>
+        <div class="text-xs text-subdued">
+          <%= time_ago_in_words(latest_change.created_at) %> ago
+        </div>
+      </div>
+    <% end %>
+  </div>
+<% end %>

@@ -52,8 +52,21 @@ module AccountableResource
       @account.sync_later
     end
 
-    # Update remaining account attributes (including currency)
-    update_params = account_params.except(:return_to, :balance)
+    # Handle currency change if provided and different from current
+    if account_params[:currency].present? && account_params[:currency] != @account.currency
+      conversion_result = @account.convert_currency(account_params[:currency])
+      unless conversion_result.success?
+        @error_message = conversion_result.error
+        render :edit, status: :unprocessable_entity
+        return
+      end
+      
+      # Set success message for currency conversion
+      flash_message = "#{accountable_type.name.underscore.humanize} currency converted to #{account_params[:currency]}"
+    end
+
+    # Update remaining account attributes (excluding currency since it's handled above)
+    update_params = account_params.except(:return_to, :balance, :currency)
     unless @account.update(update_params)
       @error_message = @account.errors.full_messages.join(", ")
       render :edit, status: :unprocessable_entity
@@ -61,7 +74,10 @@ module AccountableResource
     end
 
     @account.lock_saved_attributes!
-    redirect_back_or_to account_path(@account), notice: t("accounts.update.success", type: accountable_type.name.underscore.humanize)
+    
+    # Use conversion message if currency was changed, otherwise use default message
+    notice_message = flash_message || t("accounts.update.success", type: accountable_type.name.underscore.humanize)
+    redirect_back_or_to account_path(@account), notice: notice_message
   end
 
   private

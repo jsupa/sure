@@ -14,6 +14,7 @@ class Account < ApplicationRecord
   has_many :trades, through: :entries, source: :entryable, source_type: "Trade"
   has_many :holdings, dependent: :destroy
   has_many :balances, dependent: :destroy
+  has_many :account_currency_changes, dependent: :destroy
 
   monetize :balance, :cash_balance
 
@@ -208,5 +209,24 @@ class Account < ApplicationRecord
     else
       raise "Unknown account type: #{accountable_type}"
     end
+  end
+
+  # Convert account currency and all related data
+  def convert_currency(new_currency, **options)
+    Account::CurrencyConverter.new(
+      account: self,
+      new_currency: new_currency,
+      **options
+    ).call
+  end
+
+  # Check if currency has been changed recently
+  def currency_recently_changed?
+    account_currency_changes.where(conversion_date: 30.days.ago..Date.current).exists?
+  end
+
+  # Get the most recent currency change
+  def latest_currency_change
+    account_currency_changes.recent.first
   end
 end
