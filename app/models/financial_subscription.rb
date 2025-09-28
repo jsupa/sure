@@ -16,7 +16,7 @@ class FinancialSubscription < ApplicationRecord
 
   enum :recurrence, {
     daily: "daily",
-    weekly: "weekly", 
+    weekly: "weekly",
     monthly: "monthly",
     quarterly: "quarterly",
     yearly: "yearly"
@@ -29,14 +29,14 @@ class FinancialSubscription < ApplicationRecord
 
   class << self
     def calculate_monthly_expense(subscriptions, target_currency)
-      total_amount = subscriptions.sum do |subscription| 
+      total_amount = subscriptions.sum do |subscription|
         subscription.monthly_equivalent_amount_in_currency(target_currency)
       end
       Money.new(total_amount, target_currency)
     end
 
     def calculate_yearly_expense(subscriptions, target_currency)
-      total_amount = subscriptions.sum do |subscription| 
+      total_amount = subscriptions.sum do |subscription|
         subscription.yearly_equivalent_amount_in_currency(target_currency)
       end
       Money.new(total_amount, target_currency)
@@ -71,7 +71,7 @@ class FinancialSubscription < ApplicationRecord
 
   def monthly_equivalent_amount
     return 0 if amount.nil?
-    
+
     case recurrence
     when "daily"
       amount.to_f * 30.44 # Average days per month
@@ -90,7 +90,7 @@ class FinancialSubscription < ApplicationRecord
 
   def yearly_equivalent_amount
     return 0 if amount.nil?
-    
+
     case recurrence
     when "daily"
       amount.to_f * 365.25 # Including leap years
@@ -109,9 +109,9 @@ class FinancialSubscription < ApplicationRecord
 
   def monthly_equivalent_amount_in_currency(target_currency)
     return 0 if amount.nil?
-    
+
     base_amount = monthly_equivalent_amount
-    
+
     if currency == target_currency
       base_amount
     else
@@ -122,7 +122,7 @@ class FinancialSubscription < ApplicationRecord
         converted_money.amount
       rescue Money::ConversionError => e
         Rails.logger.warn "Currency conversion failed for #{name} (#{currency} -> #{target_currency}): #{e.message}"
-        
+
         # Try to use a reasonable fallback rate if this is a common conversion
         fallback_rate = get_fallback_exchange_rate(currency, target_currency)
         if fallback_rate
@@ -139,9 +139,9 @@ class FinancialSubscription < ApplicationRecord
 
   def yearly_equivalent_amount_in_currency(target_currency)
     return 0 if amount.nil?
-    
+
     base_amount = yearly_equivalent_amount
-    
+
     if currency == target_currency
       base_amount
     else
@@ -152,7 +152,7 @@ class FinancialSubscription < ApplicationRecord
         converted_money.amount
       rescue Money::ConversionError => e
         Rails.logger.warn "Currency conversion failed for #{name} (#{currency} -> #{target_currency}): #{e.message}"
-        
+
         # Try to use a reasonable fallback rate
         fallback_rate = get_fallback_exchange_rate(currency, target_currency)
         if fallback_rate
@@ -169,7 +169,7 @@ class FinancialSubscription < ApplicationRecord
     transaction do
       # Find or create the Subscription tag
       subscription_tag = family.tags.find_or_create_by!(name: "Subscription")
-      
+
       # Find or create the Subscriptions expense category
       subscriptions_category = family.categories.find_or_create_by!(
         name: "Subscriptions",
@@ -178,7 +178,7 @@ class FinancialSubscription < ApplicationRecord
         category.color = Category::COLORS.sample
         category.lucide_icon = "repeat"
       end
-      
+
       # Create transaction as expense with category
       transaction_record = Transaction.new(
         kind: "standard",
@@ -187,7 +187,7 @@ class FinancialSubscription < ApplicationRecord
 
       # Add the subscription tag
       transaction_record.taggings.build(tag: subscription_tag)
-      
+
       # Create entry for this transaction
       entry = account.entries.build(
         name: "Subscription: #{name}",
@@ -217,20 +217,20 @@ class FinancialSubscription < ApplicationRecord
 
   private
 
-  def get_fallback_exchange_rate(from_currency, to_currency)
-    # Some common fallback rates (approximate) - should be replaced with real data
-    fallback_rates = {
-      # EGP to EUR (Egyptian Pound to Euro) - approximate rate
-      'EGP' => { 'EUR' => 0.02, 'USD' => 0.021 },
-      # USD to EUR
-      'USD' => { 'EUR' => 0.85, 'EGP' => 48.0 },
-      # EUR to other currencies  
-      'EUR' => { 'USD' => 1.18, 'EGP' => 50.0 },
-      # GBP rates
-      'GBP' => { 'EUR' => 1.15, 'USD' => 1.25, 'EGP' => 60.0 },
-      # Add more as needed
-    }
-    
-    fallback_rates.dig(from_currency, to_currency)
-  end
+    def get_fallback_exchange_rate(from_currency, to_currency)
+      # Some common fallback rates (approximate) - should be replaced with real data
+      fallback_rates = {
+        # EGP to EUR (Egyptian Pound to Euro) - approximate rate
+        "EGP" => { "EUR" => 0.02, "USD" => 0.021 },
+        # USD to EUR
+        "USD" => { "EUR" => 0.85, "EGP" => 48.0 },
+        # EUR to other currencies
+        "EUR" => { "USD" => 1.18, "EGP" => 50.0 },
+        # GBP rates
+        "GBP" => { "EUR" => 1.15, "USD" => 1.25, "EGP" => 60.0 }
+        # Add more as needed
+      }
+
+      fallback_rates.dig(from_currency, to_currency)
+    end
 end

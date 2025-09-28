@@ -98,7 +98,7 @@ class FinancialSubscriptionsControllerTest < ActionDispatch::IntegrationTest
       }
     }
     assert_redirected_to @subscription
-    
+
     @subscription.reload
     assert_equal "Updated Netflix", @subscription.name
     assert_equal "Updated description", @subscription.description
@@ -106,14 +106,14 @@ class FinancialSubscriptionsControllerTest < ActionDispatch::IntegrationTest
 
   test "should not update financial_subscription with invalid params" do
     original_name = @subscription.name
-    
+
     patch financial_subscription_url(@subscription), params: {
       financial_subscription: {
         name: "", # Invalid
         amount: -10 # Invalid
       }
     }
-    
+
     assert_response :unprocessable_entity
     @subscription.reload
     assert_equal original_name, @subscription.name
@@ -142,14 +142,14 @@ class FinancialSubscriptionsControllerTest < ActionDispatch::IntegrationTest
 
     original_next_payment_date = overdue_subscription.next_payment_date
 
-    assert_difference(["FinancialSubscriptionPayment.count", "Transaction.count"]) do
+    assert_difference([ "FinancialSubscriptionPayment.count", "Transaction.count" ]) do
       patch mark_as_paid_financial_subscription_url(overdue_subscription)
     end
 
     assert_redirected_to financial_subscriptions_path
     follow_redirect!
     assert_includes response.body, "Payment recorded successfully"
-    
+
     overdue_subscription.reload
     assert overdue_subscription.next_payment_date > original_next_payment_date
   end
@@ -157,22 +157,22 @@ class FinancialSubscriptionsControllerTest < ActionDispatch::IntegrationTest
   test "mark as paid creates transaction with subscription tag" do
     # Ensure the subscription tag exists
     subscription_tag = @family.tags.find_or_create_by!(name: "Subscription")
-    
+
     overdue_subscription = FinancialSubscription.create!(
       family: @family,
       account: @account,
       name: "Overdue Subscription",
       amount: 10,
       currency: "USD",
-      recurrence: "monthly", 
+      recurrence: "monthly",
       next_payment_date: Date.current - 1.day
     )
 
     patch mark_as_paid_financial_subscription_url(overdue_subscription)
-    
+
     payment = overdue_subscription.financial_subscription_payments.last
     transaction = payment.transaction
-    
+
     assert_includes transaction.tags, subscription_tag
     assert_equal "Subscription: #{overdue_subscription.name}", transaction.name
   end
@@ -188,12 +188,12 @@ class FinancialSubscriptionsControllerTest < ActionDispatch::IntegrationTest
       recurrence: "monthly",
       next_payment_date: Date.current - 1.day
     )
-    
+
     # Stub mark_as_paid! to raise an error
     FinancialSubscription.any_instance.stubs(:mark_as_paid!).raises(StandardError, "Test error")
-    
+
     patch mark_as_paid_financial_subscription_url(invalid_subscription)
-    
+
     assert_redirected_to financial_subscriptions_path
     follow_redirect!
     assert_includes response.body, "Failed to record payment"
@@ -220,14 +220,14 @@ class FinancialSubscriptionsControllerTest < ActionDispatch::IntegrationTest
 
     get financial_subscriptions_url
     assert_response :success
-    
+
     assert_includes response.body, @subscription.name
     assert_not_includes response.body, other_subscription.name
   end
 
   test "requires authentication" do
     sign_out users(:dylan)
-    
+
     get financial_subscriptions_url
     assert_redirected_to new_session_path
   end

@@ -11,7 +11,7 @@ class CreateFinancialSubscriptions < ActiveRecord::Migration[7.2]
       t.text :description
       t.timestamps
 
-      t.index [:family_id, :name], unique: true
+      t.index [ :family_id, :name ], unique: true
       t.index :next_payment_date
       t.index :recurrence
     end

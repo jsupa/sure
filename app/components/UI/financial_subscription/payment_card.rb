@@ -10,6 +10,6 @@ class UI::FinancialSubscription::PaymentCard < ApplicationComponent
   end
 
   def payment_date_display
-    payment.payment_date.strftime('%B %d, %Y')
+    payment.payment_date.strftime("%B %d, %Y")
   end
 end

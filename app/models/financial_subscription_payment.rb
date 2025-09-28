@@ -14,7 +14,7 @@ class FinancialSubscriptionPayment < ApplicationRecord
   scope :for_family, ->(family) { joins(:financial_subscription).where(financial_subscriptions: { family: family }) }
 
   delegate :account, :family, :name, to: :financial_subscription, prefix: :subscription
-  
-  # Alias for backward compatibility 
+
+  # Alias for backward compatibility
   alias_method :transaction, :payment_transaction
 end

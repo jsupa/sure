@@ -8,7 +8,7 @@ class CreateFinancialSubscriptionPayments < ActiveRecord::Migration[7.2]
       t.string :currency, null: false
       t.timestamps
 
-      t.index [:financial_subscription_id, :payment_date], name: 'index_fin_sub_payments_on_subscription_and_date'
+      t.index [ :financial_subscription_id, :payment_date ], name: 'index_fin_sub_payments_on_subscription_and_date'
       t.index :payment_date
     end
   end

@@ -8,13 +8,13 @@ class UI::FinancialSubscription::Form < ApplicationComponent
 
   def recurrence_options
     FinancialSubscription.recurrences.map do |key, _|
-      [key.humanize, key]
+      [ key.humanize, key ]
     end
   end
 
   def currency_options
     # Get unique currencies from user's accounts
     currencies = accounts.map(&:currency).uniq.sort
-    currencies.map { |currency| [currency, currency] }
+    currencies.map { |currency| [ currency, currency ] }
   end
 end

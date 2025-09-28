@@ -68,7 +68,7 @@ class FinancialSubscriptionPaymentTest < ActiveSupport::TestCase
   test "delegates work correctly" do
     @payment.save!
     assert_equal @subscription.account, @payment.subscription_account
-    assert_equal @subscription.family, @payment.subscription_family  
+    assert_equal @subscription.family, @payment.subscription_family
     assert_equal @subscription.name, @payment.subscription_name
   end
 
@@ -80,7 +80,7 @@ class FinancialSubscriptionPaymentTest < ActiveSupport::TestCase
       amount: 15.99,
       currency: "USD"
     )
-    
+
     new_payment = FinancialSubscriptionPayment.create!(
       financial_subscription: @subscription,
       payment_transaction: @transaction,
@@ -108,7 +108,7 @@ class FinancialSubscriptionPaymentTest < ActiveSupport::TestCase
       account: other_account,
       name: "Other Subscription",
       amount: 10,
-      currency: "USD", 
+      currency: "USD",
       recurrence: "monthly",
       next_payment_date: Date.current
     )
@@ -119,7 +119,7 @@ class FinancialSubscriptionPaymentTest < ActiveSupport::TestCase
       amount: 10,
       currency: "USD"
     )
-    
+
     @payment.save!
 
     family_payments = FinancialSubscriptionPayment.for_family(@family)
