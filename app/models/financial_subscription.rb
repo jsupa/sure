@@ -230,6 +230,6 @@ class FinancialSubscription < ApplicationRecord
   private
 
     def get_fallback_exchange_rate(from_currency, to_currency)
-      Rails.application.config.fallback_exchange_rates.dig(from_currency, to_currency)
+      Rails.application.config.fallback_exchange_rates&.dig(from_currency, to_currency)
     end
 end

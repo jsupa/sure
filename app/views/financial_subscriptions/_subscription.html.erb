@@ -51,12 +51,12 @@
             text: "Pay",
             href: mark_as_paid_financial_subscription_path(subscription),
             method: :patch,
-            variant: "danger",
+            variant: "primary",
             size: "sm",
             icon: "credit-card",
             confirm: CustomConfirm.new(
               title: "Mark as Paid?",
-              body: "This will record a payment for #{subscription.name} and update the next payment date.",
+              body: "This will record a payment for #{h(subscription.name)} and update the next payment date.",
               btn_text: "Mark as Paid"
             ),
             frame: "_top"
@@ -71,7 +71,7 @@
             icon: "credit-card",
             confirm: CustomConfirm.new(
               title: "Record Payment?",
-              body: "This will mark #{subscription.name} as paid for today and update the next payment date.",
+              body: "This will mark #{h(subscription.name)} as paid for today and update the next payment date.",
               btn_text: "Record Payment"
             ),
             frame: "_top"
@@ -86,7 +86,7 @@
             icon: "credit-card",
             confirm: CustomConfirm.new(
               title: "Pay Early?",
-              body: "This will record an early payment for #{subscription.name} and update the next payment date.",
+              body: "This will record an early payment for #{h(subscription.name)} and update the next payment date.",
               btn_text: "Pay Early"
             ),
             frame: "_top"
@@ -101,7 +101,7 @@
             icon: "credit-card",
             confirm: CustomConfirm.new(
               title: "Record Payment?",
-              body: "This will record a payment for #{subscription.name} and update the next payment date.",
+              body: "This will record a payment for #{h(subscription.name)} and update the next payment date.",
               btn_text: "Record Payment"
             ),
             frame: "_top"

@@ -41,5 +41,8 @@ module Sure
 
     # Enable Rack::Attack middleware for API rate limiting
     config.middleware.use Rack::Attack
+
+    # Initialize fallback exchange rates configuration
+    config.fallback_exchange_rates = {}
   end
 end
