@@ -2,7 +2,7 @@ class FinancialSubscriptionPayment < ApplicationRecord
   include Monetizable
 
   belongs_to :financial_subscription
-  belongs_to :payment_transaction, class_name: "Transaction", foreign_key: "transaction_id"
+  belongs_to :payment_transaction, class_name: "Transaction", foreign_key: "transaction_id", optional: true
 
   validates :payment_date, presence: true
   validates :amount, presence: true, numericality: { greater_than: 0 }

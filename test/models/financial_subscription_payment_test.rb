@@ -3,28 +3,34 @@ require "test_helper"
 class FinancialSubscriptionPaymentTest < ActiveSupport::TestCase
   setup do
     @family = families(:dylan_family)
-    @account = accounts(:dylan_checking)
+    @account = accounts(:depository)
+
     @subscription = FinancialSubscription.create!(
-      family: @family,
       account: @account,
-      name: "Netflix",
-      amount: 15.99,
+      family: @family,
+      name: "Test Subscription",
+      amount: 19.99,
       currency: "USD",
       recurrence: "monthly",
-      next_payment_date: Date.current + 1.week
+      next_payment_date: Date.current
     )
-    @transaction = Transaction.create!(
-      name: "Test transaction",
+
+    @entry = Entry.create!(
+      account: @account,
+      entryable: Transaction.new,
+      name: "Test Transaction",
       date: Date.current,
-      amount: Money.new(1599, "USD"),
+      amount: -19.99,
       currency: "USD"
     )
-    @payment = FinancialSubscriptionPayment.new(
+    @transaction = @entry.entryable
+
+    @payment = FinancialSubscriptionPayment.create!(
       financial_subscription: @subscription,
-      payment_transaction: @transaction,
+      amount: 19.99,
+      currency: "USD",
       payment_date: Date.current,
-      amount: 15.99,
-      currency: "USD"
+      transaction_id: @transaction.id
     )
   end
 
@@ -73,25 +79,56 @@ class FinancialSubscriptionPaymentTest < ActiveSupport::TestCase
   end
 
   test "recent scope orders by payment_date desc" do
+    old_entry = Entry.create!(
+      account: @account,
+      entryable: Transaction.new,
+      name: "Old Transaction",
+      date: Date.current - 2.days,
+      amount: -15.99,
+      currency: "USD"
+    )
+    old_transaction = old_entry.entryable
+
+    new_entry = Entry.create!(
+      account: @account,
+      entryable: Transaction.new,
+      name: "New Transaction",
+      date: Date.current + 1.day,
+      amount: -20.99,
+      currency: "USD"
+    )
+    new_transaction = new_entry.entryable
+
     old_payment = FinancialSubscriptionPayment.create!(
       financial_subscription: @subscription,
-      payment_transaction: @transaction,
-      payment_date: Date.current - 1.month,
+      transaction_id: old_transaction.id,
+      payment_date: Date.current - 2.days,
       amount: 15.99,
       currency: "USD"
     )
 
     new_payment = FinancialSubscriptionPayment.create!(
       financial_subscription: @subscription,
-      payment_transaction: @transaction,
-      payment_date: Date.current,
-      amount: 15.99,
+      transaction_id: new_transaction.id,
+      payment_date: Date.current + 1.day,
+      amount: 20.99,
       currency: "USD"
     )
 
+    # Get only the payments we created for this test
+    test_payments = [ old_payment, new_payment ].sort_by(&:payment_date).reverse
+
+    assert_equal new_payment, test_payments.first
+    assert_equal old_payment, test_payments.second
+
+    # Also test that the recent scope orders correctly
     recent_payments = FinancialSubscriptionPayment.recent
-    assert_equal new_payment, recent_payments.first
-    assert_equal old_payment, recent_payments.second
+    newest_payment = recent_payments.find { |p| p.payment_date == (Date.current + 1.day) }
+    oldest_payment = recent_payments.find { |p| p.payment_date == (Date.current - 2.days) }
+
+    assert newest_payment.present?
+    assert oldest_payment.present?
+    assert recent_payments.index(newest_payment) < recent_payments.index(oldest_payment)
   end
 
   test "for_family scope filters correctly" do
@@ -114,7 +151,7 @@ class FinancialSubscriptionPaymentTest < ActiveSupport::TestCase
     )
     other_payment = FinancialSubscriptionPayment.create!(
       financial_subscription: other_subscription,
-      payment_transaction: @transaction,
+      transaction_id: @transaction.id,
       payment_date: Date.current,
       amount: 10,
       currency: "USD"
