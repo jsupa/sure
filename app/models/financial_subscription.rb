@@ -17,6 +17,7 @@ class FinancialSubscription < ApplicationRecord
   validates :currency, presence: true
   validates :recurrence, presence: true
   validates :next_payment_date, presence: true
+  validate :account_belongs_to_family
 
   monetize :amount
 
@@ -231,5 +232,13 @@ class FinancialSubscription < ApplicationRecord
 
     def get_fallback_exchange_rate(from_currency, to_currency)
       Rails.application.config.fallback_exchange_rates&.dig(from_currency, to_currency)
+    end
+
+    def account_belongs_to_family
+      return unless account_id.present? && family.present?
+
+      unless family.accounts.exists?(account_id)
+        errors.add(:account, "must belong to your family")
+      end
     end
 end

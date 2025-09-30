@@ -46,7 +46,10 @@ class FinancialSubscriptionsController < ApplicationController
   def create
     @financial_subscription = Current.family.financial_subscriptions.build(financial_subscription_params)
 
-    if @financial_subscription.save
+    # Safely assign account with proper family validation
+    safe_account_assignment(@financial_subscription)
+
+    if @financial_subscription.errors.empty? && @financial_subscription.save
       redirect_to financial_subscriptions_path, notice: "Subscription was successfully created."
     else
       render :new, status: :unprocessable_entity
@@ -57,7 +60,10 @@ class FinancialSubscriptionsController < ApplicationController
   end
 
   def update
-    if @financial_subscription.update(financial_subscription_params)
+    # Safely assign account with proper family validation
+    safe_account_assignment(@financial_subscription)
+
+    if @financial_subscription.errors.empty? && @financial_subscription.update(financial_subscription_params)
       redirect_to financial_subscriptions_path, notice: "Subscription was successfully updated."
     else
       render :edit, status: :unprocessable_entity
@@ -86,6 +92,26 @@ class FinancialSubscriptionsController < ApplicationController
     end
 
     def financial_subscription_params
-      params.require(:financial_subscription).permit(:name, :amount, :currency, :recurrence, :next_payment_date, :description, :account_id)
+      # Exclude account_id from mass assignment for security - handled separately
+      params.require(:financial_subscription).permit(
+        :name,
+        :amount,
+        :currency,
+        :recurrence,
+        :next_payment_date,
+        :description
+      )
+    end
+
+    def safe_account_assignment(subscription)
+      # Safely handle account assignment with proper family scoping
+      return unless params.dig(:financial_subscription, :account_id).present?
+
+      account = Current.family.accounts.find_by(id: params[:financial_subscription][:account_id])
+      if account
+        subscription.account = account
+      else
+        subscription.errors.add(:account, "must belong to your family")
+      end
     end
 end
