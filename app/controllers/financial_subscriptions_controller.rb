@@ -85,6 +85,16 @@ class FinancialSubscriptionsController < ApplicationController
     end
   end
 
+  def active_subscriptions_modal
+    @all_subscriptions = Current.family.financial_subscriptions.includes(:account).order(:next_payment_date)
+    @upcoming_subscription_ids = @all_subscriptions.upcoming(30).pluck(:id)
+
+    render partial: "active_subscriptions_modal", locals: {
+      subscriptions: @all_subscriptions,
+      upcoming_ids: @upcoming_subscription_ids
+    }
+  end
+
   private
 
     def set_financial_subscription

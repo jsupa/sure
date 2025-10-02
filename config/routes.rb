@@ -173,6 +173,9 @@ Rails.application.routes.draw do
   end
 
   resources :financial_subscriptions do
+    collection do
+      get :active_subscriptions_modal
+    end
     member do
       patch :mark_as_paid
     end

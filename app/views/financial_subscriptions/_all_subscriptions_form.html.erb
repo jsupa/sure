@@ -1,0 +1,128 @@
+<%# locals: (subscriptions:, upcoming_ids:) %>
+
+<div class="max-h-[70vh] overflow-y-auto space-y-4">
+  <% if subscriptions.any? %>
+    <% subscriptions.each do |subscription| %>
+      <% is_upcoming = upcoming_ids.include?(subscription.id) %>
+      <% is_overdue = subscription.next_payment_date < Date.current %>
+      
+      <div class="border rounded-xl p-4 <%= is_overdue ? 'border-red-200 bg-red-50 theme-dark:border-red-800 theme-dark:bg-red-900/20' : is_upcoming ? 'border-blue-200 bg-blue-50 theme-dark:border-blue-800 theme-dark:bg-blue-900/20' : 'border-gray-200 bg-container' %>">
+        
+        <%= styled_form_with model: subscription, 
+                            local: false,
+                            class: "space-y-4",
+                            data: { turbo_frame: "_top" } do |f| %>
+          
+          <% if subscription.errors.any? %>
+            <%= render "shared/form_errors", model: subscription %>
+          <% end %>
+
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <h3 class="font-semibold text-primary text-lg"><%= subscription.name %></h3>
+              
+              <% if is_overdue %>
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-red-100 text-red-700 rounded-full theme-dark:bg-red-900/30 theme-dark:text-red-400">
+                  <%= icon("alert-circle", class: "w-3 h-3") %>
+                  Overdue
+                </span>
+              <% elsif is_upcoming %>
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-700 rounded-full theme-dark:bg-blue-900/30 theme-dark:text-blue-400">
+                  <%= icon("clock", class: "w-3 h-3") %>
+                  Due Soon
+                </span>
+              <% end %>
+            </div>
+            
+            <div class="flex items-center gap-2">
+              <%= f.submit "Update", class: "px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg font-medium transition-colors" %>
+              <%= link_to financial_subscription_path(subscription), 
+                          method: :delete,
+                          confirm: "Are you sure you want to delete #{subscription.name}?",
+                          class: "px-3 py-2 bg-red-600 hover:bg-red-700 text-white text-sm rounded-lg font-medium transition-colors flex items-center gap-1",
+                          data: { turbo_frame: "_top" } do %>
+                <%= icon("trash", class: "w-4 h-4") %>
+                Delete
+              <% end %>
+            </div>
+          </div>
+
+          <section class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <%= f.text_field :name, 
+                              label: "Subscription name", 
+                              placeholder: "Netflix, Spotify, etc.",
+                              required: true %>
+              
+              <%= f.collection_select :account_id, 
+                  Current.family.accounts.visible.alphabetically, 
+                  :id, :name, 
+                  { prompt: "Select account", label: "Payment account" }, 
+                  required: true, 
+                  class: "form-field__input text-ellipsis" %>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <%= f.money_field :amount, 
+                               label: "Amount", 
+                               required: true, 
+                               default_currency: subscription.currency %>
+              
+              <%= f.select :recurrence, 
+                  options_for_select([
+                    ['Daily', 'daily'],
+                    ['Weekly', 'weekly'],
+                    ['Monthly', 'monthly'],
+                    ['Quarterly', 'quarterly'],
+                    ['Yearly', 'yearly']
+                  ], subscription.recurrence), 
+                  { prompt: "Select frequency", label: "Frequency" }, 
+                  required: true %>
+              
+              <%= f.date_field :next_payment_date, 
+                              label: "Next payment date", 
+                              required: true %>
+            </div>
+
+            <% if subscription.persisted? && subscription.currency != Current.family.currency %>
+              <div class="p-3 bg-surface-inset rounded-lg">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="text-sm font-medium text-primary">Converted Amount</p>
+                    <% begin %>
+                      <% converted_amount = subscription.monthly_equivalent_amount_in_currency(Current.family.currency) %>
+                      <% original_amount = subscription.amount %>
+                      <% if converted_amount > 0 && original_amount > 0 %>
+                        <p class="text-xs text-secondary">
+                          <%= number_to_currency(original_amount, unit: subscription.currency + " ") %> → 
+                          <%= number_to_currency(converted_amount, unit: Current.family.currency + " ") %>
+                        </p>
+                      <% end %>
+                    <% rescue => e %>
+                      <p class="text-xs text-red-600">Currency conversion unavailable</p>
+                    <% end %>
+                  </div>
+                </div>
+              </div>
+            <% end %>
+          </section>
+        <% end %>
+      </div>
+    <% end %>
+  <% else %>
+    <div class="text-center py-12">
+      <div class="text-secondary mb-4">
+        <%= icon("credit-card", class: "w-12 h-12 mx-auto") %>
+      </div>
+      <h3 class="text-lg font-medium text-primary mb-2">No subscriptions found</h3>
+      <p class="text-secondary">Start by adding your first subscription</p>
+      
+      <%= render DS::Link.new(
+        text: "Add your first subscription",
+        href: new_financial_subscription_path,
+        variant: "primary",
+        frame: :modal
+      ) %>
+    </div>
+  <% end %>
+</div>
