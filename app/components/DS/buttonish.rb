@@ -123,7 +123,7 @@ class DS::Buttonish < DesignSystemComponent
     # Make sure that user can override common classes like `hidden`
     def merged_base_classes
       base_display_classes = "inline-flex items-center gap-1"
-      base_radius_classes = size_data.dig(:radius_classes)
+      base_radius_classes = size_data&.dig(:radius_classes) || ""
 
       extra_classes_list = (extra_classes || "").split
 

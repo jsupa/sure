@@ -90,10 +90,30 @@
       <%= icon("alert-circle", class: "w-5 h-5") %>
       Overdue Subscriptions (<%= @overdue_subscriptions.count %>)
     </h2>
-    <div class="bg-container border border-secondary rounded-lg divide-y divide-secondary">
-      <% @overdue_subscriptions.each do |subscription| %>
-        <%= render "subscription", subscription: subscription, show_mark_paid: true %>
+    <div class="bg-container rounded-xl shadow-border-xs"
+         data-controller="bulk-select"
+         data-bulk-select-singular-label-value="subscription"
+         data-bulk-select-plural-label-value="subscriptions">
+      
+      <div class="grid-cols-12 bg-container-inset rounded-t-xl px-5 py-3 text-xs uppercase font-medium text-secondary items-center mb-4 hidden md:grid">
+        <div class="pl-0.5 col-span-8 flex items-center gap-4">
+          <p>subscription</p>
+        </div>
+        <p class="col-span-2">next payment</p>
+        <p class="col-span-2 justify-self-end">amount</p>
+      </div>
+
+      <% if @overdue_subscriptions.any? %>
+        <div class="md:hidden text-xs uppercase font-medium text-secondary mb-2 px-4 pt-4">
+          <span>SUBSCRIPTION</span>
+        </div>
       <% end %>
+
+      <div class="divide-y divide-alpha-black-100 theme-dark:divide-alpha-white-200">
+        <% @overdue_subscriptions.each do |subscription| %>
+          <%= render "subscription", subscription: subscription, show_mark_paid: true %>
+        <% end %>
+      </div>
     </div>
   </section>
 <% end %>
@@ -105,10 +125,30 @@
       <%= icon("clock", class: "w-5 h-5") %>
       Upcoming Subscriptions
     </h2>
-    <div class="bg-container border border-secondary rounded-lg divide-y divide-secondary">
-      <% @upcoming_subscriptions.each do |subscription| %>
-        <%= render "subscription", subscription: subscription, show_mark_paid: false %>
+    <div class="bg-container rounded-xl shadow-border-xs"
+         data-controller="bulk-select"
+         data-bulk-select-singular-label-value="subscription"
+         data-bulk-select-plural-label-value="subscriptions">
+      
+      <div class="grid-cols-12 bg-container-inset rounded-t-xl px-5 py-3 text-xs uppercase font-medium text-secondary items-center mb-4 hidden md:grid">
+        <div class="pl-0.5 col-span-8 flex items-center gap-4">
+          <p>subscription</p>
+        </div>
+        <p class="col-span-2">next payment</p>
+        <p class="col-span-2 justify-self-end">amount</p>
+      </div>
+
+      <% if @upcoming_subscriptions.any? %>
+        <div class="md:hidden text-xs uppercase font-medium text-secondary mb-2 px-4 pt-4">
+          <span>SUBSCRIPTION</span>
+        </div>
       <% end %>
+
+      <div class="divide-y divide-alpha-black-100 theme-dark:divide-alpha-white-200">
+        <% @upcoming_subscriptions.each do |subscription| %>
+          <%= render "subscription", subscription: subscription, show_mark_paid: false %>
+        <% end %>
+      </div>
     </div>
   </section>
 <% end %>
@@ -120,10 +160,27 @@
       <%= icon("check-circle", class: "w-5 h-5") %>
       Recent Payments
     </h2>
-    <div class="bg-container border border-secondary rounded-lg divide-y divide-secondary">
-      <% @recent_payments.each do |payment| %>
-        <%= render "subscription_payment", payment: payment %>
+    <div class="bg-container rounded-xl shadow-border-xs">
+      
+      <div class="grid-cols-12 bg-container-inset rounded-t-xl px-5 py-3 text-xs uppercase font-medium text-secondary items-center mb-4 hidden md:grid">
+        <div class="pl-0.5 col-span-8 flex items-center gap-4">
+          <p>payment</p>
+        </div>
+        <p class="col-span-2">paid on</p>
+        <p class="col-span-2 justify-self-end">amount</p>
+      </div>
+
+      <% if @recent_payments.any? %>
+        <div class="md:hidden text-xs uppercase font-medium text-secondary mb-2 px-4 pt-4">
+          <span>PAYMENT</span>
+        </div>
       <% end %>
+
+      <div class="divide-y divide-alpha-black-100 theme-dark:divide-alpha-white-200">
+        <% @recent_payments.each do |payment| %>
+          <%= render "subscription_payment", payment: payment %>
+        <% end %>
+      </div>
     </div>
   </section>
 <% end %>

@@ -6,6 +6,7 @@ class Transaction < ApplicationRecord
 
   has_many :taggings, as: :taggable, dependent: :destroy
   has_many :tags, through: :taggings
+  has_many :financial_subscription_payments, foreign_key: "transaction_id", dependent: :destroy
 
   accepts_nested_attributes_for :taggings, allow_destroy: true
 

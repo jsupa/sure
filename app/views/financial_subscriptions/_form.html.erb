@@ -35,6 +35,57 @@
   </section>
 
   <%= render DS::Disclosure.new(title: "Details") do %>
+    <% if financial_subscription.persisted? && financial_subscription.currency != Current.family.currency %>
+      <div class="mb-4 p-3 bg-surface-inset rounded-lg">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium text-primary">Converted Amount</p>
+            <% begin %>
+              <% converted_amount = financial_subscription.monthly_equivalent_amount_in_currency(Current.family.currency) %>
+              <% original_amount = financial_subscription.amount %>
+              <% if converted_amount > 0 && original_amount > 0 %>
+                <p class="text-xs text-secondary">
+                  <%= number_to_currency(original_amount, unit: financial_subscription.currency + " ") %> → 
+                  <%= number_to_currency(converted_amount, unit: Current.family.currency + " ") %>
+                </p>
+              <% else %>
+                <p class="text-xs text-secondary">
+                  <%= financial_subscription.currency %> → <%= Current.family.currency %>
+                </p>
+              <% end %>
+            <% rescue => e %>
+              <p class="text-xs text-secondary">
+                <%= financial_subscription.currency %> → <%= Current.family.currency %>
+              </p>
+            <% end %>
+          </div>
+          <div class="text-right">
+            <% begin %>
+              <% converted_amount = financial_subscription.monthly_equivalent_amount_in_currency(Current.family.currency) %>
+              <% if converted_amount > 0 %>
+                <p class="text-sm font-medium text-primary">
+                  <%= Money.new(converted_amount, Current.family.currency).format %>
+                </p>
+                <% if financial_subscription.amount > 0 %>
+                  <p class="text-xs text-secondary">
+                    ≈ <%= number_with_precision(converted_amount / financial_subscription.amount, precision: 4) %> rate
+                  </p>
+                <% end %>
+              <% else %>
+                <p class="text-sm text-secondary">
+                  Conversion unavailable
+                </p>
+              <% end %>
+            <% rescue => e %>
+              <p class="text-sm text-secondary">
+                Conversion unavailable
+              </p>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    <% end %>
+    
     <%= f.text_area :description,
         label: "Description",
         placeholder: "Optional notes about this subscription",

@@ -231,7 +231,12 @@ class FinancialSubscription < ApplicationRecord
   private
 
     def get_fallback_exchange_rate(from_currency, to_currency)
-      Rails.application.config.fallback_exchange_rates&.dig(from_currency, to_currency)
+      return nil unless Rails.application.config.respond_to?(:fallback_exchange_rates)
+
+      rates = Rails.application.config.fallback_exchange_rates
+      return nil unless rates.is_a?(Hash)
+
+      rates.dig(from_currency, to_currency)
     end
 
     def account_belongs_to_family
