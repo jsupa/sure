@@ -4,6 +4,8 @@
   <%= render DS::Alert.new(message: @error_message, variant: :error) %>
 <% end %>
 
+<%= render "shared/currency_change_notice", account: account %>
+
 <%= styled_form_with model: account, url: url, scope: :account, data: { turbo: false }, class: "flex flex-col gap-4 justify-between grow text-primary" do |form| %>
   <div class="grow space-y-2">
     <%= form.hidden_field :accountable_type %>

@@ -80,4 +80,112 @@ class CreditCardsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Credit card account updated", flash[:notice]
     assert_enqueued_with(job: SyncJob)
   end
+
+  test "updates account currency with conversion" do
+    # Create exchange rate for testing
+    ExchangeRate.create!(
+      from_currency: "USD",
+      to_currency: "EUR",
+      rate: 0.85,
+      date: Date.current
+    )
+
+    original_currency = @account.currency
+    original_balance = @account.balance
+    assert_equal "USD", original_currency
+
+    patch credit_card_path(@account), params: {
+      account: {
+        name: @account.name,
+        currency: "EUR",
+        accountable_type: "CreditCard",
+        accountable_attributes: {
+          id: @account.accountable_id
+        }
+      }
+    }
+
+    @account.reload
+    assert_equal "EUR", @account.currency
+    # Balance should be converted using exchange rate
+    expected_balance = (original_balance * 0.85).round(4)
+    assert_equal expected_balance, @account.balance.round(4)
+
+    # Check currency change record was created
+    currency_change = @account.account_currency_changes.last
+    assert_not_nil currency_change
+    assert_equal "USD", currency_change.from_currency
+    assert_equal "EUR", currency_change.to_currency
+
+    assert_redirected_to @account
+    assert_includes flash[:notice], "converted to EUR"
+  end
+
+  test "rejects invalid currency" do
+    patch credit_card_path(@account), params: {
+      account: {
+        name: @account.name,
+        currency: "INVALID",
+        accountable_type: "CreditCard",
+        accountable_attributes: {
+          id: @account.accountable_id
+        }
+      }
+    }
+
+    # Should remain unchanged due to validation error
+    @account.reload
+    assert_equal "USD", @account.currency
+    assert_response :unprocessable_entity
+    assert_includes response.body, "Invalid currency"
+  end
+
+  test "handles currency conversion without exchange rate" do
+    patch credit_card_path(@account), params: {
+      account: {
+        name: @account.name,
+        currency: "JPY",  # No exchange rate available
+        accountable_type: "CreditCard",
+        accountable_attributes: {
+          id: @account.accountable_id
+        }
+      }
+    }
+
+    # Should remain unchanged due to missing exchange rate
+    @account.reload
+    assert_equal "USD", @account.currency
+    assert_response :unprocessable_entity
+    assert_includes response.body, "Exchange rate not available"
+  end
+
+  test "allows currency update with balance change" do
+    # Create exchange rate for testing
+    ExchangeRate.create!(
+      from_currency: "USD",
+      to_currency: "GBP",
+      rate: 0.79,
+      date: Date.current
+    )
+
+    patch credit_card_path(@account), params: {
+      account: {
+        name: @account.name,
+        balance: 1500,
+        currency: "GBP",
+        accountable_type: "CreditCard",
+        accountable_attributes: {
+          id: @account.accountable_id
+        }
+      }
+    }
+
+    @account.reload
+    assert_equal "GBP", @account.currency
+    # Balance should be set to 1500 (from balance update), then currency conversion happens after
+    # The balance update happens first, then currency conversion
+    assert_equal 1500, @account.balance
+    assert_redirected_to @account
+    assert_includes flash[:notice], "converted to GBP"
+  end
 end

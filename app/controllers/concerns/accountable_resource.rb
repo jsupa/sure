@@ -41,8 +41,22 @@ module AccountableResource
   end
 
   def update
-    # Handle balance update if provided
-    if account_params[:balance].present?
+    balance_provided = account_params[:balance].present?
+    currency_changing = account_params[:currency].present? && account_params[:currency] != @account.currency
+
+    # If both balance and currency are being updated, handle currency change first
+    # then set the balance as if it's already in the new currency
+    if balance_provided && currency_changing
+      # Convert currency first without converting the balance
+      conversion_result = @account.convert_currency(account_params[:currency], convert_balance: false)
+      unless conversion_result.success?
+        @error_message = conversion_result.error
+        render :edit, status: :unprocessable_entity
+        return
+      end
+
+      # Now set the balance as if it's in the new currency
+      @account.reload # Reload to get updated currency
       result = @account.set_current_balance(account_params[:balance].to_d)
       unless result.success?
         @error_message = result.error_message
@@ -50,9 +64,34 @@ module AccountableResource
         return
       end
       @account.sync_later
+
+      flash_message = "#{accountable_type.name.underscore.humanize} currency converted to #{account_params[:currency]}"
+    else
+      # Handle balance update if provided (and currency is not changing)
+      if balance_provided
+        result = @account.set_current_balance(account_params[:balance].to_d)
+        unless result.success?
+          @error_message = result.error_message
+          render :edit, status: :unprocessable_entity
+          return
+        end
+        @account.sync_later
+      end
+
+      # Handle currency change if provided (and balance is not being updated)
+      if currency_changing
+        conversion_result = @account.convert_currency(account_params[:currency])
+        unless conversion_result.success?
+          @error_message = conversion_result.error
+          render :edit, status: :unprocessable_entity
+          return
+        end
+
+        flash_message = "#{accountable_type.name.underscore.humanize} currency converted to #{account_params[:currency]}"
+      end
     end
 
-    # Update remaining account attributes
+    # Update remaining account attributes (excluding currency since it's handled above)
     update_params = account_params.except(:return_to, :balance, :currency)
     unless @account.update(update_params)
       @error_message = @account.errors.full_messages.join(", ")
@@ -61,7 +100,10 @@ module AccountableResource
     end
 
     @account.lock_saved_attributes!
-    redirect_back_or_to account_path(@account), notice: t("accounts.update.success", type: accountable_type.name.underscore.humanize)
+
+    # Use conversion message if currency was changed, otherwise use default message
+    notice_message = flash_message || t("accounts.update.success", type: accountable_type.name.underscore.humanize)
+    redirect_back_or_to account_path(@account), notice: notice_message
   end
 
   private
