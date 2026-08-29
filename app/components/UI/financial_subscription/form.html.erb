@@ -1,0 +1,78 @@
+<%= form_with model: subscription, local: true, class: "space-y-6" do |form| %>
+  <% if subscription.errors.any? %>
+    <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+      <h3 class="text-red-800 font-medium mb-2">Please fix the following errors:</h3>
+      <ul class="text-red-700 text-sm list-disc list-inside">
+        <% subscription.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="grid grid-cols-2 gap-4">
+    <div>
+      <%= form.label :name, class: "block text-sm font-medium mb-1" %>
+      <%= form.text_field :name, 
+          class: "w-full px-3 py-2 border border-secondary rounded-md",
+          placeholder: "Netflix, Spotify, etc." %>
+    </div>
+    
+    <div>
+      <%= form.label :account_id, "Account", class: "block text-sm font-medium mb-1" %>
+      <%= form.collection_select :account_id, accounts, :id, :name, 
+          { prompt: "Select account" }, 
+          { class: "w-full px-3 py-2 border border-secondary rounded-md" } %>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-2 gap-4">
+    <div>
+      <%= form.label :amount, class: "block text-sm font-medium mb-1" %>
+      <%= form.number_field :amount, step: 0.01, 
+          class: "w-full px-3 py-2 border border-secondary rounded-md", 
+          placeholder: "0.00" %>
+    </div>
+    
+    <div>
+      <%= form.label :currency, class: "block text-sm font-medium mb-1" %>
+      <%= form.select :currency, 
+          options_for_select(currency_options, subscription.currency),
+          { prompt: "Select currency" },
+          { class: "w-full px-3 py-2 border border-secondary rounded-md" } %>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-2 gap-4">
+    <div>
+      <%= form.label :recurrence, class: "block text-sm font-medium mb-1" %>
+      <%= form.select :recurrence, 
+          options_for_select(recurrence_options, subscription.recurrence), 
+          { prompt: "Select frequency" },
+          { class: "w-full px-3 py-2 border border-secondary rounded-md" } %>
+    </div>
+    
+    <div>
+      <%= form.label :next_payment_date, "Next payment", class: "block text-sm font-medium mb-1" %>
+      <%= form.date_field :next_payment_date, 
+          class: "w-full px-3 py-2 border border-secondary rounded-md" %>
+    </div>
+  </div>
+
+  <div>
+    <%= form.label :description, class: "block text-sm font-medium mb-1" %>
+    <%= form.text_area :description, 
+        class: "w-full px-3 py-2 border border-secondary rounded-md", 
+        rows: 2, 
+        placeholder: "Optional description" %>
+  </div>
+
+  <div class="flex justify-end gap-3 pt-4">
+    <%= link_to financial_subscriptions_path, 
+        class: "px-4 py-2 text-secondary hover:text-primary" do %>
+      Cancel
+    <% end %>
+    <%= form.submit subscription.persisted? ? "Update subscription" : "Create subscription", 
+        class: "px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90" %>
+  </div>
+<% end %>

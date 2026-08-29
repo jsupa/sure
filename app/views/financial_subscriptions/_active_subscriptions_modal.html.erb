@@ -1,0 +1,7 @@
+<%= render DS::Dialog.new(width: "full") do |dialog| %>
+  <% dialog.with_header(title: "Manage All Subscriptions", subtitle: "Edit your #{subscriptions.count} active subscriptions") %>
+  
+  <% dialog.with_body do %>
+    <%= render "all_subscriptions_form", subscriptions: subscriptions, upcoming_ids: upcoming_ids %>
+  <% end %>
+<% end %>

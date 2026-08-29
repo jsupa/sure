@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_08_08_143007) do
+ActiveRecord::Schema[7.2].define(version: 2025_09_28_205401) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -18,6 +18,20 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_08_143007) do
   # Custom types defined in this database.
   # Note that some types may not work with other database engines. Be careful if changing database.
   create_enum "account_status", ["ok", "syncing", "error"]
+
+  create_table "account_currency_changes", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "account_id", null: false
+    t.string "from_currency", null: false
+    t.string "to_currency", null: false
+    t.decimal "exchange_rate", precision: 19, scale: 8
+    t.date "conversion_date", null: false
+    t.text "notes"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "conversion_date"], name: "idx_on_account_id_conversion_date_f4034aaeaf"
+    t.index ["account_id"], name: "index_account_currency_changes_on_account_id"
+    t.index ["from_currency", "to_currency"], name: "idx_on_from_currency_to_currency_eef74130df"
+  end
 
   create_table "accounts", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "subtype"
@@ -29,7 +43,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_08_143007) do
     t.uuid "accountable_id"
     t.decimal "balance", precision: 19, scale: 4
     t.string "currency"
-    t.virtual "classification", type: :string, as: "\nCASE\n    WHEN ((accountable_type)::text = ANY (ARRAY[('Loan'::character varying)::text, ('CreditCard'::character varying)::text, ('OtherLiability'::character varying)::text])) THEN 'liability'::text\n    ELSE 'asset'::text\nEND", stored: true
+    t.virtual "classification", type: :string, as: "\nCASE\n    WHEN ((accountable_type)::text = ANY ((ARRAY['Loan'::character varying, 'CreditCard'::character varying, 'OtherLiability'::character varying])::text[])) THEN 'liability'::text\n    ELSE 'asset'::text\nEND", stored: true
     t.uuid "import_id"
     t.uuid "plaid_account_id"
     t.decimal "cash_balance", precision: 19, scale: 4, default: "0.0"
@@ -281,6 +295,38 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_08_143007) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["family_id"], name: "index_family_exports_on_family_id"
+  end
+
+  create_table "financial_subscription_payments", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "financial_subscription_id", null: false
+    t.uuid "transaction_id", null: false
+    t.date "payment_date", null: false
+    t.decimal "amount", precision: 19, scale: 4, null: false
+    t.string "currency", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["financial_subscription_id", "payment_date"], name: "index_fin_sub_payments_on_subscription_and_date"
+    t.index ["financial_subscription_id"], name: "idx_on_financial_subscription_id_96345de6fd"
+    t.index ["payment_date"], name: "index_financial_subscription_payments_on_payment_date"
+    t.index ["transaction_id"], name: "index_financial_subscription_payments_on_transaction_id"
+  end
+
+  create_table "financial_subscriptions", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "account_id", null: false
+    t.uuid "family_id", null: false
+    t.string "name", null: false
+    t.decimal "amount", precision: 19, scale: 4, null: false
+    t.string "currency", null: false
+    t.string "recurrence", null: false
+    t.date "next_payment_date", null: false
+    t.text "description"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_financial_subscriptions_on_account_id"
+    t.index ["family_id", "name"], name: "index_financial_subscriptions_on_family_id_and_name", unique: true
+    t.index ["family_id"], name: "index_financial_subscriptions_on_family_id"
+    t.index ["next_payment_date"], name: "index_financial_subscriptions_on_next_payment_date"
+    t.index ["recurrence"], name: "index_financial_subscriptions_on_recurrence"
   end
 
   create_table "holdings", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -876,6 +922,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_08_143007) do
     t.string "subtype"
   end
 
+  add_foreign_key "account_currency_changes", "accounts"
   add_foreign_key "accounts", "families"
   add_foreign_key "accounts", "imports"
   add_foreign_key "accounts", "plaid_accounts"
@@ -892,6 +939,10 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_08_143007) do
   add_foreign_key "entries", "accounts"
   add_foreign_key "entries", "imports"
   add_foreign_key "family_exports", "families"
+  add_foreign_key "financial_subscription_payments", "financial_subscriptions"
+  add_foreign_key "financial_subscription_payments", "transactions"
+  add_foreign_key "financial_subscriptions", "accounts"
+  add_foreign_key "financial_subscriptions", "families"
   add_foreign_key "holdings", "accounts"
   add_foreign_key "holdings", "securities"
   add_foreign_key "impersonation_session_logs", "impersonation_sessions"

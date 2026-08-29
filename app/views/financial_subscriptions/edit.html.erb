@@ -1,0 +1,6 @@
+<%= render DS::Dialog.new do |dialog| %>
+  <% dialog.with_header(title: "Edit subscription") %>
+  <% dialog.with_body do %>
+    <%= render "form", financial_subscription: @financial_subscription %>
+  <% end %>
+<% end %>

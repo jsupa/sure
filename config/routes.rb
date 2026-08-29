@@ -172,6 +172,15 @@ Rails.application.routes.draw do
     end
   end
 
+  resources :financial_subscriptions do
+    collection do
+      get :active_subscriptions_modal
+    end
+    member do
+      patch :mark_as_paid
+    end
+  end
+
   # Convenience routes for polymorphic paths
   # Example: account_path(Account.new(accountable: Depository.new)) => /depositories/123
   direct :edit_account do |model, options|

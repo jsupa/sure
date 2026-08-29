@@ -1,0 +1,209 @@
+<%# locals: (subscription:, show_mark_paid: false) %>
+
+<%= turbo_frame_tag dom_id(subscription) do %>
+  <div class="grid grid-cols-12 items-center text-primary text-sm font-medium p-4 lg:p-4">
+
+    <div class="pr-4 lg:pr-10 flex items-center gap-3 lg:gap-4 col-span-8">
+
+      <div class="max-w-full">
+        <%= content_tag :div, class: ["flex items-center gap-2"] do %>
+          <div class="w-6 h-6 bg-alpha-black-25 rounded-full flex items-center justify-center flex-shrink-0">
+            <%= icon("repeat", class: "w-4 h-4 text-secondary") %>
+          </div>
+
+          <div class="truncate">
+            <div class="space-y-0.5">
+              <div class="flex items-center gap-1 min-w-0">
+                <div class="truncate flex-shrink">
+                  <%= link_to(
+                        subscription.name,
+                        edit_financial_subscription_path(subscription),
+                        data: {
+                          turbo_frame: "modal",
+                          turbo_prefetch: false
+                        },
+                        class: "hover:underline"
+                      ) %>
+                </div>
+
+                <div class="flex items-center gap-1 flex-shrink-0">
+                  <% if subscription.overdue? %>
+                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-red-100 theme-dark:bg-red-900/50 text-red-800 theme-dark:text-red-300">
+                      <%= pluralize(subscription.days_overdue, "day") %> overdue
+                    </span>
+                  <% end %>
+                </div>
+              </div>
+
+              <div class="text-secondary text-xs font-normal hidden lg:block">
+                <%= subscription.recurrence.humanize %> • 
+                <%= link_to subscription.account.name,
+                    account_path(subscription.account, tab: "transactions"),
+                    data: { turbo_frame: "_top" },
+                    class: "hover:underline" %>
+                <% if subscription.description.present? %>
+                  • <%= subscription.description %>
+                <% end %>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <div class="hidden lg:flex items-center gap-1 col-span-2">
+      <div class="text-right">
+        <p class="text-xs text-secondary">Next payment</p>
+        <p class="text-sm font-medium text-primary">
+          <%= subscription.next_payment_date.strftime('%b %d') %>
+        </p>
+      </div>
+    </div>
+
+    <div class="col-span-2 ml-auto flex items-center justify-end gap-3">
+      <div class="text-right">
+        <p class="font-medium text-primary text-base">
+          <% begin %>
+            <%= subscription.amount_money&.format %>
+          <% rescue => e %>
+            <%= number_to_currency(subscription.amount, unit: subscription.currency + " ") %>
+          <% end %>
+        </p>
+        <div class="lg:hidden">
+          <p class="text-xs text-secondary">
+            Next: <%= subscription.next_payment_date.strftime('%b %d') %>
+          </p>
+        </div>
+      </div>
+        <% if show_mark_paid && subscription.overdue? %>
+          <div class="hidden sm:block">
+            <%= render DS::Button.new(
+              text: "Pay",
+              href: mark_as_paid_financial_subscription_path(subscription),
+              method: :patch,
+              variant: "primary",
+              size: "sm",
+              icon: "credit-card",
+              confirm: CustomConfirm.new(
+                title: "Mark as Paid?",
+                body: "This will record a payment for #{h(subscription.name)} and update the next payment date.",
+                btn_text: "Mark as Paid"
+              ),
+              frame: "_top"
+            ) %>
+          </div>
+          <div class="sm:hidden">
+            <%= render DS::Button.new(
+              href: mark_as_paid_financial_subscription_path(subscription),
+              method: :patch,
+              variant: "primary",
+              size: "sm",
+              icon: "credit-card",
+              confirm: CustomConfirm.new(
+                title: "Mark as Paid?",
+                body: "This will record a payment for #{h(subscription.name)} and update the next payment date.",
+                btn_text: "Mark as Paid"
+              ),
+              frame: "_top"
+            ) %>
+          </div>
+        <% elsif subscription.next_payment_date == Date.current %>
+          <div class="hidden sm:block">
+            <%= render DS::Button.new(
+              text: "Pay Now",
+              href: mark_as_paid_financial_subscription_path(subscription),
+              method: :patch,
+              variant: "primary",
+              size: "sm",
+              icon: "credit-card",
+              confirm: CustomConfirm.new(
+                title: "Record Payment?",
+                body: "This will mark #{h(subscription.name)} as paid for today and update the next payment date.",
+                btn_text: "Record Payment"
+              ),
+              frame: "_top"
+            ) %>
+          </div>
+          <div class="sm:hidden">
+            <%= render DS::Button.new(
+              href: mark_as_paid_financial_subscription_path(subscription),
+              method: :patch,
+              variant: "primary",
+              size: "sm",
+              icon: "credit-card",
+              confirm: CustomConfirm.new(
+                title: "Record Payment?",
+                body: "This will mark #{h(subscription.name)} as paid for today and update the next payment date.",
+                btn_text: "Record Payment"
+              ),
+              frame: "_top"
+            ) %>
+          </div>
+                <% elsif subscription.next_payment_date <= 7.days.from_now %>
+          <div class="hidden sm:block">
+            <%= render DS::Button.new(
+              text: "Pay Early",
+              href: mark_as_paid_financial_subscription_path(subscription),
+              method: :patch,
+              variant: "ghost",
+              size: "sm",
+              icon: "credit-card",
+              confirm: CustomConfirm.new(
+                title: "Pay Early?",
+                body: "This will record an early payment for #{h(subscription.name)} and update the next payment date.",
+                btn_text: "Pay Early"
+              ),
+              frame: "_top"
+            ) %>
+          </div>
+          <div class="sm:hidden">
+            <%= render DS::Button.new(
+              href: mark_as_paid_financial_subscription_path(subscription),
+              method: :patch,
+              variant: "ghost",
+              size: "sm",
+              icon: "credit-card",
+              confirm: CustomConfirm.new(
+                title: "Pay Early?",
+                body: "This will record an early payment for #{h(subscription.name)} and update the next payment date.",
+                btn_text: "Pay Early"
+              ),
+              frame: "_top"
+            ) %>
+          </div>
+        <% else %>
+          <div class="hidden sm:block">
+            <%= render DS::Button.new(
+              text: "Pay",
+              href: mark_as_paid_financial_subscription_path(subscription),
+              method: :patch,
+              variant: "outline",
+              size: "sm",
+              icon: "credit-card",
+              confirm: CustomConfirm.new(
+                title: "Record Payment?",
+                body: "This will record a payment for #{h(subscription.name)} and update the next payment date.",
+                btn_text: "Record Payment"
+              ),
+              frame: "_top"
+            ) %>
+          </div>
+          <div class="sm:hidden">
+            <%= render DS::Button.new(
+              href: mark_as_paid_financial_subscription_path(subscription),
+              method: :patch,
+              variant: "outline",
+              size: "sm",
+              icon: "credit-card",
+              confirm: CustomConfirm.new(
+                title: "Record Payment?",
+                body: "This will record a payment for #{h(subscription.name)} and update the next payment date.",
+                btn_text: "Record Payment"
+              ),
+              frame: "_top"
+            ) %>
+          </div>
+        <% end %>
+    </div>
+  </div>
+<% end %>

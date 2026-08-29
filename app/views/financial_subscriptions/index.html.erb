@@ -1,0 +1,210 @@
+<header class="flex justify-between items-center text-primary font-medium">
+  <h1 class="text-xl">Subscriptions</h1>
+  <div class="flex items-center gap-5">
+    <div class="flex items-center gap-2">
+      <%= render DS::Link.new(
+        text: "New subscription",
+        href: new_financial_subscription_path,
+        variant: "primary",
+        icon: "plus",
+        frame: :modal
+      ) %>
+    </div>
+  </div>
+</header>
+
+<div class="space-y-6 pb-20">
+  <!-- Expense Overview -->
+  <% if @financial_subscriptions.any? %>
+    <section>
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-lg font-semibold text-primary flex items-center gap-2">
+          <%= icon("bar-chart-3", class: "w-5 h-5") %>
+          Expense Overview
+        </h2>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 bg-container rounded-xl shadow-border-xs md:divide-x divide-y md:divide-y-0 divide-alpha-black-100 theme-dark:divide-alpha-white-200">
+        <div class="p-4 space-y-2">
+          <p class="text-sm text-secondary">Monthly Total</p>
+          <p class="text-primary font-medium text-xl">
+            <%= @monthly_total.format %>
+          </p>
+          <% if @has_mixed_currencies %>
+            <p class="text-xs text-secondary opacity-75">
+              <%= icon("arrow-up-down", class: "w-3 h-3 inline mr-1") %>
+              Converted to <%= @family_currency %>
+            </p>
+          <% end %>
+        </div>
+        <div class="p-4 space-y-2">
+          <p class="text-sm text-secondary">Yearly Total</p>
+          <p class="text-primary font-medium text-xl">
+            <%= @yearly_total.format %>
+          </p>
+          <% if @has_mixed_currencies %>
+            <p class="text-xs text-secondary opacity-75">
+              <%= icon("arrow-up-down", class: "w-3 h-3 inline mr-1") %>
+              Converted to <%= @family_currency %>
+            </p>
+          <% end %>
+        </div>
+        <div class="p-4 space-y-2">
+          <p class="text-sm text-secondary">Active Subscriptions</p>
+          <%= link_to active_subscriptions_modal_financial_subscriptions_path, 
+                      class: "block text-primary font-medium text-xl hover:text-blue-600 transition-colors cursor-pointer",
+                      data: { 
+                        turbo_frame: "modal"
+                      },
+                      title: "Click to manage all subscriptions" do %>
+            <%= @financial_subscriptions.count %>
+            <%= icon("external-link", class: "w-4 h-4 inline ml-1 opacity-50") %>
+          <% end %>
+          <% if @has_mixed_currencies %>
+            <p class="text-xs text-tertiary">
+              <%= @financial_subscriptions.pluck(:currency).uniq.join(', ') %>
+            </p>
+          <% end %>
+        </div>
+      </div>
+      
+      <% if @monthly_overdue.amount > 0 %>
+        <div class="mt-4 bg-red-50 theme-dark:bg-red-900/20 border border-red-200 theme-dark:border-red-800 rounded-lg p-4">
+          <div class="flex items-center gap-2 mb-2">
+            <%= icon("alert-circle", class: "w-4 h-4 text-red-600") %>
+            <p class="text-sm font-medium text-red-700 theme-dark:text-red-400">Overdue Monthly</p>
+          </div>
+          <p class="text-xl font-bold text-red-600">
+            <%= @monthly_overdue.format %>
+          </p>
+          <% if @has_mixed_currencies %>
+            <p class="text-xs text-red-600 opacity-75 mt-1">
+              <%= icon("arrow-up-down", class: "w-3 h-3 inline mr-1") %>
+              Converted to <%= @family_currency %>
+            </p>
+          <% end %>
+        </div>
+      <% end %>
+    </section>
+  <% end %>
+
+
+
+<!-- Overdue Subscriptions -->
+<% if @overdue_subscriptions.any? %>
+  <section>
+    <h2 class="text-lg font-semibold text-red-600 mb-3 flex items-center gap-2">
+      <%= icon("alert-circle", class: "w-5 h-5") %>
+      Overdue Subscriptions (<%= @overdue_subscriptions.count %>)
+    </h2>
+    <div class="bg-container rounded-xl shadow-border-xs"
+         data-controller="bulk-select"
+         data-bulk-select-singular-label-value="subscription"
+         data-bulk-select-plural-label-value="subscriptions">
+      
+      <div class="grid-cols-12 bg-container-inset rounded-t-xl px-5 py-3 text-xs uppercase font-medium text-secondary items-center mb-4 hidden md:grid">
+        <div class="pl-0.5 col-span-8 flex items-center gap-4">
+          <p>subscription</p>
+        </div>
+        <p class="col-span-2">next payment</p>
+        <p class="col-span-2 justify-self-end">amount</p>
+      </div>
+
+      <% if @overdue_subscriptions.any? %>
+        <div class="md:hidden text-xs uppercase font-medium text-secondary mb-2 px-4 pt-4">
+          <span>SUBSCRIPTION</span>
+        </div>
+      <% end %>
+
+      <div class="divide-y divide-alpha-black-100 theme-dark:divide-alpha-white-200">
+        <% @overdue_subscriptions.each do |subscription| %>
+          <%= render "subscription", subscription: subscription, show_mark_paid: true %>
+        <% end %>
+      </div>
+    </div>
+  </section>
+<% end %>
+
+<!-- Upcoming Subscriptions -->
+<% if @upcoming_subscriptions.any? %>
+  <section>
+    <h2 class="text-lg font-semibold text-primary mb-3 flex items-center gap-2">
+      <%= icon("clock", class: "w-5 h-5") %>
+      Upcoming Subscriptions
+    </h2>
+    <div class="bg-container rounded-xl shadow-border-xs"
+         data-controller="bulk-select"
+         data-bulk-select-singular-label-value="subscription"
+         data-bulk-select-plural-label-value="subscriptions">
+      
+      <div class="grid-cols-12 bg-container-inset rounded-t-xl px-5 py-3 text-xs uppercase font-medium text-secondary items-center mb-4 hidden md:grid">
+        <div class="pl-0.5 col-span-8 flex items-center gap-4">
+          <p>subscription</p>
+        </div>
+        <p class="col-span-2">next payment</p>
+        <p class="col-span-2 justify-self-end">amount</p>
+      </div>
+
+      <% if @upcoming_subscriptions.any? %>
+        <div class="md:hidden text-xs uppercase font-medium text-secondary mb-2 px-4 pt-4">
+          <span>SUBSCRIPTION</span>
+        </div>
+      <% end %>
+
+      <div class="divide-y divide-alpha-black-100 theme-dark:divide-alpha-white-200">
+        <% @upcoming_subscriptions.each do |subscription| %>
+          <%= render "subscription", subscription: subscription, show_mark_paid: false %>
+        <% end %>
+      </div>
+    </div>
+  </section>
+<% end %>
+
+<!-- Recent Payments -->
+<% if @recent_payments.any? %>
+  <section>
+    <h2 class="text-lg font-semibold text-primary mb-3 flex items-center gap-2">
+      <%= icon("check-circle", class: "w-5 h-5") %>
+      Recent Payments
+    </h2>
+    <div class="bg-container rounded-xl shadow-border-xs">
+      
+      <div class="grid-cols-12 bg-container-inset rounded-t-xl px-5 py-3 text-xs uppercase font-medium text-secondary items-center mb-4 hidden md:grid">
+        <div class="pl-0.5 col-span-8 flex items-center gap-4">
+          <p>payment</p>
+        </div>
+        <p class="col-span-2">paid on</p>
+        <p class="col-span-2 justify-self-end">amount</p>
+      </div>
+
+      <% if @recent_payments.any? %>
+        <div class="md:hidden text-xs uppercase font-medium text-secondary mb-2 px-4 pt-4">
+          <span>PAYMENT</span>
+        </div>
+      <% end %>
+
+      <div class="divide-y divide-alpha-black-100 theme-dark:divide-alpha-white-200">
+        <% @recent_payments.each do |payment| %>
+          <%= render "subscription_payment", payment: payment %>
+        <% end %>
+      </div>
+    </div>
+  </section>
+<% end %>
+
+<% if @overdue_subscriptions.empty? && @upcoming_subscriptions.empty? && @recent_payments.empty? %>
+  <div class="text-center py-12">
+    <div class="text-secondary mb-4">
+      <%= icon("credit-card", size: "lg") %>
+    </div>
+    <h3 class="text-lg font-medium text-primary mb-2">No subscriptions yet</h3>
+    <p class="text-secondary mb-4">Track your recurring payments and subscriptions</p>
+    <%= render DS::Link.new(
+      text: "Add your first subscription",
+      href: new_financial_subscription_path,
+      variant: "primary",
+      frame: :modal
+    ) %>
+  </div>
+<% end %>
+</div>
+

@@ -85,6 +85,8 @@ gem "langfuse-ruby", "~> 0.1.4", require: "langfuse"
 
 group :development, :test do
   gem "debug", platforms: %i[mri windows]
+  gem "pry"
+  gem "pry-rails"
   gem "brakeman", require: false
   gem "rubocop-rails-omakase", require: false
   gem "i18n-tasks"
